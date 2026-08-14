@@ -1,0 +1,620 @@
+---
+title: ""
+author: ""
+date: ""
+output:
+  bookdown::html_document2:
+    code_folding: hide
+    df_print: paged
+    theme: flatly
+    highlight: tango
+    toc: true
+    toc_float: true
+    number_sections: false
+    
+bibliography: "bibliografia.bib"
+csl: abnt.csl
+lang: pt-BR
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  font-size: 12pt;
+  margin: 0;
+}
+
+/* Títulos principais (#) */
+h1 {
+  font-size: 22px;
+}
+
+/* Subtítulos (##) */
+h2 {
+  font-size: 18px;
+}
+
+/* Sub-subtítulos (###) */
+h3 {
+  font-size: 16px;
+}
+
+caption {
+  caption-side: top;
+  text-align: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* ESCONDE o "Table 1" automático */
+caption span {
+  display: none;
+}
+
+table {
+  margin-bottom: 10px !important;
+}
+
+p {
+  margin-bottom: 10px;
+}
+
+table caption {
+  font-weight: bold;
+  color: black;
+  font-size: 16px;
+  caption-side: top;
+  text-align: center;
+}
+
+.title, .author, .date {
+  display: none;
+}
+
+.header {
+  text-align: center;
+  padding: 30px 20px 10px 20px;
+}
+
+.header img {
+  width: 90px;
+  margin-bottom: 10px;
+}
+
+.header h2 {
+  margin: 5px 0;
+  color: black; /* agora padrão */
+}
+
+.header p {
+  margin: 2px 0;
+}
+
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE
+)
+.main-title {
+  text-align: center;
+  font-size: 36px;
+  font-weight: bold;
+  color: #8B0000;
+  margin-top: 20px;
+  margin-bottom: 30px;
+}
+
+h1, h2, h3 {
+  color: #8B0000;
+}
+
+.tocify {
+  background-color: #f8f8f8;
+  border-left: 4px solid #8B0000;
+}
+
+pre {
+  border-left: 5px solid #8B0000;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 40px;
+  color: gray;
+}
+</style>
+
+<div class="header">
+
+<img src="logouepb.png">
+
+<p>**UNIVERSIDADE ESTADUAL DA PARAÍBA**</p>
+<p>**CENTRO DE CIÊNCIAS E TECNOLOGIA**</p>
+<p>**DEPARTAMENTO DE ESTATÍSTICA**</p>
+<p>**Discentes: Adrielly Rocha de Sousa Ferreira e Arthur Victor Ramos Vidal De Negreiros**</p>
+<p>**Docente: Érika Fialho Morais Xavier**</p>
+
+</div>
+
+<div class="main-title">
+<p>**Perfis educacionais e socioeconômicos dos municípios nordestinos: Uma análise com Componentes Principais e Cluster**</p>
+</div>
+
+---
+
+```{r, include=FALSE}
+#Pacotes
+
+library(kableExtra)
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(knitr)
+library(tidyr)
+library(corrplot)
+library(psych)
+library(FactoMineR)
+library(factoextra)
+```
+
+# 1. Introdução
+
+A região Nordeste do Brasil é marcada por profundas desigualdades socioeconômicas e educacionais entre seus municípios, refletindo diferenças históricas de desenvolvimento, acesso a serviços públicos e oportunidades econômicas. Indicadores como renda per capita, taxa de analfabetismo, escolaridade média e desempenho educacional (IDEB) frequentemente apresentam grande variação entre municípios de um mesmo estado, o que dificulta a formulação de diagnósticos regionais generalizados e de políticas públicas que considerem essa heterogeneidade. Diante desse cenário, surge a necessidade de compreender de que forma os municípios nordestinos se agrupam ou se diferenciam quanto aos seus perfis educacionais e socioeconômicos, e quais são as principais dimensões que explicam essa variação.
+
+Como diversos indicadores podem estar relacionados entre si, analisá-los de forma isolada pode dificultar a interpretação dos resultados. Nesse contexto, técnicas de análise multivariada tornam-se uma boa alternativa, pois permitem identificar padrões existentes nos dados e resumir as informações presentes em um conjunto menor de variáveis.
+
+Assim, este trabalho tem como objetivo analisar os perfis educacionais e socioeconômicos dos municípios da região Nordeste utilizando a Análise de Componentes Principais (ACP) e a Análise de Cluster. A ACP foi empregada para identificar as principais dimensões de variação entre os indicadores analisados, enquanto a Análise de Cluster foi utilizada para agrupar municípios com características semelhantes, possibilitando uma melhor compreensão dos diferentes perfis existentes na região.
+
+# 2. Dados
+
+## 2.1 Fonte dos Dados
+
+Os indicadores socioeconômicos utilizados neste estudo foram obtidos a partir do **Atlas do Desenvolvimento Humano**, enquanto os indicadores educacionais foram extraídos da base do **Índice de Desenvolvimento da Educação Básica (IDEB)**. Foram considerados os dados do Atlas referentes ao ano de 2010 e do IDEB referentes a 2011, por serem os períodos mais próximos entre as duas bases. Inicialmente, realizou-se o tratamento dos dados, incluindo a seleção dos municípios da Região Nordeste, a identificação dos municípios por meio do código do IBGE e a integração das duas bases de dados.
+
+Para a análise, foram selecionadas variáveis representativas das dimensões educacional e socioeconômica dos municípios: índice de escolaridade, índice de frequência escolar, IDHM Renda, renda domiciliar per capita, Índice de Gini, proporção de pessoas em situação de pobreza, taxa de analfabetismo da população com 15 anos ou mais, expectativa de anos de estudo, taxa de desocupação, e IDEB. Após a junção das bases do Atlas do Desenvolvimento Humano e do IDEB, foram excluídos os municípios que apresentaram valores ausentes nas variáveis provenientes da base do IDEB, resultando em uma base final composta por 1.724 municípios nordestinos.
+
+## 2.2 Variáveis do Estudo
+
+As variáveis contidas no banco de dados, e que serão analisadas, estão contidos na Tabela 1.
+
+```{r}
+tabela <- data.frame(
+  Variável = c(
+    "Índice de escolaridade (indice_escolaridade)",
+    "Índice de frequência escolar (indice_frequencia_escolar)",
+    "IDHM Renda (idhm_r)",
+    "Renda domiciliar per capita (renda_pc)",
+    "Índice de Gini (indice_gini)",
+    "Proporção de pessoas em situação de pobreza (prop_pobreza)",
+    "Taxa de analfabetismo da população de 15 anos ou mais (taxa_analfabetismo_15_mais)",
+    "Expectativa de anos de estudo (expectativa_anos_estudo)",
+    "Taxa de desocupação (taxa_desocupacao)",
+    "Índice de Desenvolvimento da Educação Básica – IDEB (ideb)"
+  ),
+  Descrição = c(
+    "Subíndice do IDHM Educação que representa o nível de escolaridade da população adulta.",
+    "Subíndice do IDHM Educação que representa a frequência escolar da população em idade escolar.",
+    "Índice que representa a dimensão renda do desenvolvimento humano municipal.",
+    "Renda domiciliar per capita média da população do município.",
+    "Medida da desigualdade na distribuição da renda do município.",
+    "Percentual da população em situação de pobreza.",
+    "Percentual da população de 15 anos ou mais que não sabe ler e escrever.",
+    "Número esperado de anos de estudo para a população em idade escolar.",
+    "Percentual da população economicamente ativa que se encontra desocupada.",
+    "Indicador da qualidade da educação básica, calculado a partir do desempenho dos estudantes no SAEB e das taxas de aprovação."
+  ),
+  Tipo = rep("Quantitativa", 10)
+)
+
+knitr::kable(
+  tabela,
+  caption = "Tabela 1: Descrição e classificação das variáveis utilizadas na análise."
+)
+```
+
+# 3. Metodologia
+
+## 3.1 Análise de Componentes Principais
+
+Com o objetivo de reduzir a dimensionalidade das variáveis educacionais e socioeconômicas e identificar os principais eixos de variação entre os municípios nordestinos, foi utilizada a Análise de Componentes Principais (ACP), técnica multivariada exploratória que transforma um conjunto de variáveis originais, possivelmente correlacionadas, em um novo conjunto de variáveis não correlacionadas (as componentes principais), ordenadas de forma a reter o máximo possível da variância dos dados originais @hair2009multivariate. Como as variáveis analisadas apresentavam escalas de medida distintas, os dados foram previamente padronizados (média zero e variância um), de modo que todas contribuíssem igualmente para o cálculo das componentes.
+
+O número de componentes retidas foi definido a partir da análise do Scree Plot, considerando o ponto em que ocorre uma mudança mais acentuada na inclinação dos autovalores, indicando uma redução da contribuição das componentes seguintes. Essa decisão foi complementada pela análise da variância explicada e acumulada. A interpretação de cada componente foi realizada com base nas cargas das componentes (*loadings*), isto é, no grau de associação entre cada variável original e a componente, sendo consideradas relevantes as variáveis com maiores cargas em módulo. Também foram observadas as comunalidades de cada variável, indicando a proporção de sua variância explicada pelo conjunto de componentes retidas.
+
+
+## 3.2 Análise de Cluster
+
+Após a redução da dimensionalidade e identificação das principais estruturas de variação por meio da ACP, buscou-se identificar grupos de municípios nordestinos com características socioeconômicas e educacionais semelhantes. Para isso, foi utilizada a Análise de Cluster, uma técnica multivariada exploratória que busca reunir observações semelhantes em um mesmo grupo e maximizar as diferenças entre grupos distintos. O agrupamento foi realizado a partir das coordenadas dos municípios nas duas primeiras componentes principais obtidas na ACP, permitindo trabalhar com um espaço de menor dimensão e reduzindo a influência da correlação entre as variáveis originais. Em seguida, foi calculada a matriz de distâncias utilizando a distância Euclidiana, medida amplamente empregada em análises envolvendo variáveis quantitativas. O método de agrupamento adotado foi o hierárquico aglomerativo de Ward (*Ward.D2*), proposto por @ward1963hierarchical, por buscar a formação de grupos internamente mais homogêneos. O resultado foi representado por meio de um dendrograma, utilizado como um dos critérios para auxiliar na definição do número de grupos.
+
+Como critérios complementares para a escolha do número de clusters, foram utilizados o método do cotovelo e o coeficiente médio de Silhouette, proposto por @rousseeuw1987silhouettes. O método do cotovelo permite observar a redução da variabilidade dentro dos grupos à medida que o número de clusters aumenta, enquanto o índice de Silhouette avalia simultaneamente a coesão interna e a separação entre os grupos, sendo que valores mais elevados indicam agrupamentos de melhor qualidade. Após a definição do número de grupos, os clusters obtidos foram caracterizados por meio de estatísticas descritivas das variáveis utilizadas na análise, permitindo identificar perfis distintos dos municípios nordestinos quanto às suas características educacionais e socioeconômicas.
+
+# 4. Resultados
+
+```{r}
+# Importando o banco de dados
+
+dados <- read_csv(
+  "dados_final_nordeste.csv",
+  show_col_types = FALSE
+)
+
+```
+
+## Análise descritiva dos dados
+
+```{r}
+# Selecionando apenas as variáveis utilizadas da análise
+dados2 <- dados %>%
+  select(
+    -id_municipio,
+    -nome,
+    -sigla_uf
+  )
+```
+
+### Resumo dos dados 
+```{r}
+summary(dados2)
+```
+As estatísticas descritivas mostram que existe uma grande diferença entre os municípios nordestinos. Os valores de IDHM Educação e IDHM Renda apresentaram médias de 0,489 e 0,563, respectivamente, indicando variação nos níveis de desenvolvimento humano entre os municípios da região. A renda per capita apresentou média de R$ 250,25, mas com ampla variação entre os municípios, evidenciando condições econômicas bastante distintas.
+
+Em relação aos indicadores sociais, a proporção média de pessoas em situação de pobreza foi de 41,53%, enquanto a taxa média de analfabetismo da população com 15 anos ou mais foi de 25,15%, mostrando que esses indicadores apresentam valores elevados em parte dos municípios analisados. A expectativa média de anos de estudo foi de aproximadamente 8,95 anos e a taxa média de desocupação foi de 8,72%. Já o IDEB apresentou média de 3,22, com valores variando entre 1,6 e 5,5, reforçando a existência de diferenças no desempenho educacional entre os municípios.
+
+### Verificando as correlações
+
+```{r}
+corrplot::corrplot(
+  cor(dados2),
+  method = "color",
+  type = "upper",
+  tl.col = "black",
+  tl.srt = 45
+)
+```
+
+Observa-se que algumas variáveis apresentam forte correlação entre si, tanto positiva quanto negativa. Indicadores como IDHM, renda per capita, expectativa de anos de estudo e IDEB tendem a estar positivamente correlacionados, enquanto pobreza e taxa de analfabetismo apresentam correlações negativas com esses indicadores. Esses resultados indicam que existe uma estrutura de associação entre as variáveis, justificando a aplicação da Análise de Componentes Principais (ACP). A exceção é o índice de Gini, que apresenta correlações mais fracas com a maior parte das demais variáveis, indicando uma relação menos evidente com o conjunto de indicadores analisados. Dessa forma, o índice de Gini foi retirado da ACP, mantendo-se as demais variáveis que apresentaram maior associação entre si e melhor representam as dimensões educacionais e socioeconômicas consideradas no estudo.
+
+### Distribuição das variáveis
+
+```{r}
+par(mfrow = c(4, 3), mar = c(4, 4, 2, 1))
+for (v in names(dados2)) {
+  hist(dados2[[v]], main = v, xlab = "", col = "#8B0000", border = "white")
+}
+```
+
+```{r}
+par(mfrow = c(4, 3), mar = c(4, 4, 2, 1))
+for (v in names(dados2)) {
+  boxplot(dados2[[v]], main = v, col = "#f2c4c4", horizontal = TRUE)
+}
+```
+
+De modo geral, a maior parte das variáveis apresenta distribuição aproximadamente simétrica, como IDHM Educação, IDHM Renda, Índice de Gini, proporção de pessoas em situação de pobreza, expectativa de anos de estudo e IDEB. Por outro lado, renda per capita, taxa de analfabetismo da população com 15 anos ou mais e, principalmente, taxa de desocupação apresentam maior assimetria e concentração de valores extremos, evidenciada pelos boxplots. Destaca-se a renda per capita, cuja distribuição possui cauda alongada à direita, indicando a existência de poucos municípios com renda significativamente superior à da maioria dos municípios nordestinos.
+
+### Identificação de outliers
+
+**Outliers univariados** (regra do intervalo interquartil, $1{,}5\times IQR$):
+
+```{r}
+outliers_tab <- data.frame(
+  Variável = names(dados2),
+  `Nº de outliers` = sapply(dados2, function(x) {
+    q1 <- quantile(x, .25); q3 <- quantile(x, .75); iqr <- q3 - q1
+    sum(x < q1 - 1.5*iqr | x > q3 + 1.5*iqr)
+  }),
+  `% da amostra` = sapply(dados2, function(x) {
+    q1 <- quantile(x, .25); q3 <- quantile(x, .75); iqr <- q3 - q1
+    round(100*mean(x < q1 - 1.5*iqr | x > q3 + 1.5*iqr), 1)
+  }),
+  check.names = FALSE
+)
+knitr::kable(outliers_tab, caption = "Tabela 2: Outliers univariados por variável (critério do boxplot).", row.names = FALSE)
+```
+
+As variáveis com maior proporção de outliers são renda per capita (15,4%) e taxa de analfabetismo (10,2%), o que já era esperado dado o comportamento assimétrico observado nos histogramas. As demais variáveis apresentaram baixa proporção de valores extremos, em geral inferior a 5% da amostra. Os municípios com maior renda per capita da amostra são majoritariamente capitais e municípios turísticos/litorâneos (Recife-PE, Aracaju-SE, Cabedelo-PB, Fernando de Noronha-PE, Lauro de Freitas-BA), o que é consistente com a realidade socioeconômica da região.
+
+Além dos outliers univariados, também foi calculada a distância de Mahalanobis de cada município em relação ao centroide multivariado, de forma a identificar municípios com combinações atípicas de características (mesmo quando nenhuma variável isolada é extrema):
+
+```{r mahalanobis, echo=FALSE}
+center <- colMeans(dados2)
+covm <- cov(dados2)
+mdist <- mahalanobis(dados2, center, covm)
+cutoff <- qchisq(0.995, df = ncol(dados2))
+n_mv_out <- sum(mdist > cutoff)
+
+idx <- order(mdist, decreasing = TRUE)[1:10]
+tab_mv <- data.frame(
+  Município = dados$nome[idx],
+  UF = dados$sigla_uf[idx],
+  `Distância de Mahalanobis` = round(mdist[idx], 1),
+  check.names = FALSE
+)
+knitr::kable(tab_mv, caption = paste0("Tabela 3: 10 municípios com maior distância de Mahalanobis (de um total de ",
+                                       n_mv_out, " outliers multivariados, ",
+                                       round(100*n_mv_out/nrow(dados),1), "% da amostra, considerando o percentil 99,5% da distribuição qui-quadrado)."),
+             row.names = FALSE)
+```
+
+Os municípios com comportamento mais atípico são majoritariamente capitais e grandes centros urbanos (Salvador-BA, Recife-PE, Teresina-PI e Aracaju-SE) e municípios com características muito particulares, como Fernando de Noronha-PE (distrito estadual com perfil socioeconômico muito distinto dos demais municípios, renda elevada e baixa população) e Campo Alegre do Fidalgo-PI. Optou-se por manter esses municípios na análise**, pois representam situações reais e legítimas da diversidade socioeconômica do Nordeste — sua exclusão enviesaria a representação da região — mas deve-se ter em mente, na interpretação da ACP a seguir, que esses casos tendem a exercer maior influência sobre os componentes extraídos.
+
+
+## Análise de Componentes Principais
+
+Algumas variáveis da base apresentavam escalas diferentes das usuais (por exemplo, valores armazenados multiplicados por 10 ou 100), o que já foi corrigido na etapa de preparação dos dados. Ainda assim, como as variáveis utilizadas na Análise de Componentes Principais (ACP) apresentam escalas e unidades diferentes, os dados foram padronizados, com média 0 e desvio padrão 1. Essa padronização foi realizada por meio do argumento `scale.unit = TRUE` na função `PCA()` do pacote `FactoMineR`, garantindo que todas as variáveis tenham a mesma importância na obtenção dos componentes principais.
+
+```{r}
+# Variáveis utilizadas na análise
+
+dados_acp <- dados2 %>%
+  select(
+    idhm_e,
+    idhm_r,
+    renda_pc,
+    prop_pobreza,
+    taxa_analfabetismo_15_mais,
+    expectativa_anos_estudo,
+    taxa_desocupacao,
+    ideb
+  )
+```
+
+ 
+### Extração dos componentes
+
+```{r}
+acp <- PCA(
+  dados_acp,
+  scale.unit = TRUE,
+  ncp = ncol(dados_acp),
+  graph = FALSE
+)
+```
+
+```{r}
+variancia_acp <- data.frame(
+  Componente = paste0("CP", 1:length(acp$eig[, 1])),
+  Autovalor = acp$eig[, 1],
+  Variancia = acp$eig[, 2],
+  Variancia_acumulada = acp$eig[, 3]
+)
+
+knitr::kable(
+  variancia_acp,
+  digits = 2,
+  col.names = c(
+    "Componente",
+    "Autovalor",
+    "Variância explicada (%)",
+    "Variância acumulada (%)"
+  ),
+  caption = "Autovalores e percentual de variância explicada pelas componentes.",
+  position = "H"
+)
+```
+
+Os resultados mostram que a primeira componente apresentou a maior participação na variância total, explicando 42,90% dos dados, enquanto a segunda explicou 17,86%. Juntas, as duas primeiras componentes concentraram 60,75% da variância, indicando que uma parte considerável das informações originais pode ser representada por essas duas dimensões. As demais componentes apresentaram participação individual menor, com valores inferiores a 1 a partir da terceira componente.
+
+Para auxiliar na definição do número de componentes a serem retidas, foi analisado o gráfico de autovalores (Scree Plot). A escolha considera o critério de Kaiser, que recomenda a retenção das componentes com autovalores superiores a 1, juntamente com a observação do ponto de mudança na inclinação do gráfico.
+
+```{r}
+plot(
+  acp$eig[, 1],
+  type = "b",
+  pch = 19,
+  col = "#8B0000",
+  xlab = "Componente principal",
+  ylab = "Autovalor",
+  main = "Scree Plot"
+)
+
+grid()
+```
+
+O Scree Plot apresenta uma queda acentuada entre a primeira e a segunda componente, seguida por uma redução mais gradual nas componentes seguintes. Assim, foram consideradas as duas primeiras componentes, que juntas explicam 60,75\% da variância total.
+
+```{r}
+fviz_eig(
+  acp,
+  addlabels = TRUE,
+  barfill = "#8B0000",
+  barcolor = "#8B0000",
+  main = "Variância explicada por componente"
+)
+```
+
+### Interpretação dos componentes
+
+```{r}
+fviz_pca_var(acp, axes = c(1,2), col.var = "contrib",
+             gradient.cols = c("#f2c4c4", "#c1272d", "#8B0000"),
+             repel = TRUE, title = "Círculo de correlações - CP1 x CP2")
+```
+
+```{r}
+cargas <- round(acp$var$coord[, 1:2], 3)
+
+colnames(cargas) <- c("CP1", "CP2")
+
+knitr::kable(
+  cargas,
+  caption = "Tabela 5: Cargas fatoriais (correlação variável-componente) para os dois primeiros componentes.",
+  row.names = TRUE
+)
+```
+
+### Interpretação dos componentes
+
+**Componente 1 (42,9% da variância) — Desenvolvimento socioeconômico e educacional.** Apresentou cargas positivas elevadas para IDHM Educação (0,848), IDHM Renda (0,895), renda per capita (0,712) e expectativa de anos de estudo (0,489), além de cargas negativas para proporção de pobreza (-0,860) e taxa de analfabetismo da população com 15 anos ou mais (-0,558). Esses resultados indicam que municípios com escores elevados nesse componente tendem a apresentar melhores condições de desenvolvimento, com maior renda, melhores indicadores educacionais, menor proporção de pessoas em situação de pobreza e menores taxas de analfabetismo. Assim, o primeiro componente representa o nível geral de desenvolvimento socioeconômico e educacional dos municípios.
+
+**Componente 2 (17,9% da variância) — Educação e mercado de trabalho.** Esse componente apresentou maiores cargas positivas para o IDEB (0,710) e para a expectativa de anos de estudo (0,606), enquanto a taxa de desocupação apresentou carga negativa (-0,571). As cargas negativas da renda per capita (-0,217) e do IDHM Renda (-0,223) foram de menor magnitude. Dessa forma, esse componente diferencia municípios com melhores indicadores educacionais daqueles que apresentam maiores níveis de desocupação, representando uma dimensão relacionada à educação e ao mercado de trabalho.
+
+```{r}
+comu <- data.frame(
+  Variável = rownames(acp$var$cos2),
+  `Comunalidade (2 CPs)` = round(rowSums(acp$var$cos2[, 1:2]), 3),
+  check.names = FALSE
+)
+
+comu <- comu[order(-comu$`Comunalidade (2 CPs)`), ]
+
+knitr::kable(
+  comu,
+  caption = "Tabela 6: Comunalidade de cada variável considerando os dois primeiros componentes.",
+  row.names = FALSE
+)
+```
+
+As comunalidades mostram o quanto cada variável é representada pelos dois componentes principais. Os maiores valores foram observados para IDHM Renda (0,850), IDHM Educação (0,801) e proporção de pessoas em situação de pobreza (0,778), indicando que essas variáveis foram bem representadas pela ACP. Em contrapartida, a taxa de desocupação (0,380) e a taxa de analfabetismo da população com 15 anos ou mais (0,325) apresentaram menores comunalidades, mostrando que parte de sua variabilidade não foi capturada pelos componentes retidos.
+
+```{r}
+fviz_pca_ind(acp, axes = c(1,2), geom = "point", col.ind = "cos2",
+             gradient.cols = c("#f2c4c4", "#c1272d", "#8B0000"),
+             title = "Mapa dos municípios - CP1 x CP2")
+```
+
+A distribuição dos municípios no plano formado pelas duas primeiras componentes não apresenta uma separação clara, mas mostra diferentes posições de acordo com seus perfis socioeconômicos e educacionais. As cores representam a qualidade de representação de cada município no plano, medida pelo cos². Os municípios em tons mais escuros apresentam maior qualidade de representação, enquanto os tons mais claros são menos bem representados pelas duas componentes. Como as cores não representam grupos, a identificação de municípios com características semelhantes será realizada posteriormente por meio da análise de cluster.
+
+## Análise de Cluster
+
+Como as duas primeiras componentes principais apresentaram autovalores superiores a 1 e concentraram a maior parte da variabilidade dos dados, optou-se por utilizá-las como base para a Análise de Cluster. Essa estratégia permite realizar o agrupamento em um espaço de menor dimensão, reduzindo a influência da correlação existente entre as variáveis originais e preservando as principais informações do conjunto de dados. Dessa forma, os agrupamentos foram obtidos a partir das coordenadas dos municípios nas duas primeiras componentes principais, utilizando o método hierárquico de Ward.
+
+```{r}
+dados_cluster <- acp$ind$coord[, 1:2]
+```
+
+```{r}
+distancias <- dist(dados_cluster)
+```
+
+```{r}
+hc <- hclust(distancias, method = "ward.D2")
+```
+
+### Definição do Número de Grupos por meio do Dendrograma, Método do Cotovelo e Índice de Silhueta
+
+```{r}
+
+plot(
+  hc,
+  main = "Dendrograma – Método de Ward",
+  xlab = "Municípios",
+  ylab = "Altura da fusão",
+  sub = "",
+  cex = 0.65,
+  hang = -1,
+  col = "#8B0000"
+)
+```
+
+```{r}
+grafico_cotovelo <- fviz_nbclust(
+  acp$ind$coord[, 1:2],
+  kmeans,
+  method = "wss"
+) +
+  labs(
+    title = "Método do cotovelo",
+    x = "Número de clusters (k)",
+    y = "Soma dos quadrados intra-cluster"
+  ) +
+  theme_minimal()
+
+grafico_cotovelo$layers[[1]]$aes_params$colour <- "#8B0000"
+grafico_cotovelo$layers[[2]]$aes_params$colour <- "#8B0000"
+
+grafico_cotovelo
+```
+
+```{r}
+grafico_silhueta <- fviz_nbclust(
+  acp$ind$coord[, 1:2],
+  kmeans,
+  method = "silhouette"
+) +
+  labs(
+    title = "Escolha do número de clusters pelo índice de Silhouette",
+    x = "Número de clusters (k)",
+    y = "Silhueta média"
+  ) +
+  theme_minimal()
+
+grafico_silhueta$layers[[1]]$aes_params$colour <- "#8B0000"
+grafico_silhueta$layers[[2]]$aes_params$colour <- "#8B0000"
+
+grafico_silhueta
+```
+
+
+Com esses resultados, os três critérios foram considerados conjuntamente para a definição do número de grupos. No dendrograma, observa-se uma estrutura hierárquica que permite a formação de quatro grupos antes da realização de novas subdivisões. O método do cotovelo também apresenta uma redução mais acentuada da variabilidade intra-clusters até aproximadamente $k = 4$, indicando que, a partir desse ponto, os ganhos com a inclusão de novos grupos são menores. 
+
+Embora o índice de Silhouette apresente seu maior valor para $k = 2$, a solução com $k = 4$ também apresenta um valor relativamente elevado, superior ao observado para $k = 3$ e para a maioria das soluções posteriores. Além disso, a análise da distribuição dos municípios entre os grupos mostrou uma estrutura hierárquica consistente. Na solução com $k = 2$, foram obtidos grupos com 975 e 929 municípios. Ao aumentar para $k = 3$, o grupo de 975 municípios foi subdividido em grupos de 384 e 411 municípios, enquanto o grupo de 929 municípios permaneceu inalterado. Para $k = 4$, o grupo de 384 municípios foi novamente subdividido em grupos de 77 e 307 municípios, mantendo-se os grupos de 929 e 411 municípios. Já em $k = 5$, o grupo de 929 municípios passou a ser subdividido em grupos de 256 e 673 municípios.
+
+Essa estabilidade observada nos grupos para $k \leq 4$, associada aos resultados do dendrograma, do método do cotovelo e do índice de Silhouette, indica que a solução com quatro clusters permite uma diferenciação mais detalhada dos municípios sem a necessidade de subdivisões adicionais. Assim, considerando conjuntamente os critérios estatísticos e a estrutura hierárquica dos agrupamentos, optou-se pela formação de quatro clusters ($k = 4$).
+
+
+```{r}
+# Definindo o número de grupos.
+dados2$cluster <- cutree(hc, k = 4)
+```
+
+
+```{r}
+perfil_cluster <- dados2 %>%
+  group_by(cluster) %>%
+  summarise(
+    N = n(),
+    IDHM_Educacao = mean(idhm_e, na.rm = TRUE),
+    IDHM_Renda = mean(idhm_r, na.rm = TRUE),
+    Renda_PC = mean(renda_pc, na.rm = TRUE),
+    Pobreza = mean(prop_pobreza, na.rm = TRUE),
+    Analfabetismo = mean(taxa_analfabetismo_15_mais, na.rm = TRUE),
+    Expectativa_Estudo = mean(expectativa_anos_estudo, na.rm = TRUE),
+    Desocupacao = mean(taxa_desocupacao, na.rm = TRUE),
+    IDEB = mean(ideb, na.rm = TRUE)
+  )
+
+knitr::kable(
+  perfil_cluster,
+  digits = 2,
+  caption = "Tabela 7: Médias das variáveis por cluster."
+)
+```
+
+Os quatro grupos identificados apresentaram perfis distintos em relação aos indicadores educacionais e socioeconômicos dos municípios nordestinos. O **Cluster 1**, formado por 77 municípios, reuniu os municípios com os melhores indicadores gerais, apresentando os maiores valores de IDHM Educação (0,62), IDHM Renda (0,68) e renda per capita (R$ 544,93), além da menor proporção de pobreza (19,41%) e de analfabetismo (11,80%). Também apresentou elevada média de expectativa de anos de estudo (9,55), caracterizando municípios com melhores condições de desenvolvimento humano e socioeconômico.
+
+O **Cluster 2**, que concentrou o maior número de municípios, com 929 municípios, apresentou o perfil de maior vulnerabilidade socioeconômica. Esse grupo registrou os menores valores de IDHM Educação (0,45), IDHM Renda (0,54) e renda per capita (R$ 203,00), além das maiores proporções de pobreza (46,78%) e analfabetismo (28,38%). A expectativa média de anos de estudo também foi a menor entre os quatro grupos, com 8,59 anos, enquanto o IDEB apresentou média de 3,04. De modo geral, esse cluster concentra os municípios com condições socioeconômicas e educacionais menos favoráveis.
+
+O **Cluster 3**, formado por 307 municípios, apresentou características intermediárias em relação aos indicadores analisados. Os valores de IDHM Educação (0,51), IDHM Renda (0,60) e renda per capita (R$ 326,17) foram superiores aos observados no Cluster 2, mas inferiores aos do Cluster 1. As proporções de pobreza (33,00%) e analfabetismo (19,98%) também ficaram em uma posição intermediária. Esse grupo apresentou ainda a maior taxa média de desocupação entre os quatro clusters, com 11,53%, e IDEB médio de 2,97.
+
+Por fim, o **Cluster 4**, formado por 411 municípios, apresentou um perfil intermediário em relação aos indicadores de desenvolvimento humano, com IDHM Educação de 0,54 e IDHM Renda de 0,57. Apesar de apresentar renda per capita relativamente baixa (R$ 245,16) e níveis elevados de pobreza (40,18%) e analfabetismo (24,21%), esse grupo apresentou uma das maiores médias de expectativa de anos de estudo, com 9,67 anos. Destaca-se ainda por apresentar o maior valor médio de IDEB entre os quatro clusters (3,81) e a menor taxa média de desocupação (6,88%), indicando um perfil particular, no qual melhores resultados educacionais coexistem com condições socioeconômicas menos favoráveis.
+
+De modo geral, os resultados evidenciam a existência de quatro perfis socioeconômicos e educacionais distintos entre os municípios analisados. O Cluster 1 representa os municípios com melhores condições de desenvolvimento, enquanto o Cluster 2 concentra aqueles em situação de maior vulnerabilidade. Os Clusters 3 e 4 apresentam características intermediárias, porém com diferenças importantes entre renda, pobreza, educação e desocupação. A formação desses grupos permite identificar diferentes padrões socioeconômicos e educacionais entre os municípios, evidenciando que melhores condições em determinados indicadores não necessariamente estão acompanhadas de melhores resultados em todas as dimensões analisadas.
+
+# 5. Conclusão
+
+Este trabalho teve como objetivo analisar os perfis educacionais e socioeconômicos dos municípios da região Nordeste por meio da Análise de Componentes Principais (ACP) e da Análise de Cluster. Os resultados mostraram que essas técnicas foram capazes de sintetizar um conjunto de indicadores em estruturas mais simples, facilitando a compreensão das diferenças existentes entre os municípios.
+
+A ACP permitiu identificar as principais relações entre os indicadores analisados, possibilitando uma interpretação mais geral dos perfis dos municípios. A análise evidenciou que os indicadores relacionados às condições socioeconômicas e educacionais apresentam forte contribuição para explicar a variabilidade existente entre os municípios, permitindo visualizar padrões de maior desenvolvimento e de maior vulnerabilidade. Dessa forma, a ACP contribuiu para sintetizar as informações e facilitar a identificação das características que mais diferenciam os municípios da região Nordeste.
+
+Com base nessas componentes, a Análise de Cluster identificou quatro grupos com características distintas. O primeiro grupo reuniu municípios com melhores indicadores de desenvolvimento humano, renda e educação. O segundo, que concentrou a maior quantidade de municípios, apresentou os indicadores mais associados à vulnerabilidade socioeconômica, com menores níveis de renda e desenvolvimento humano e maiores proporções de pobreza e analfabetismo. Os terceiro e quarto grupos apresentaram características intermediárias, mas com diferenças importantes entre os indicadores analisados, destacando-se, por exemplo, o melhor desempenho no IDEB do quarto grupo e sua menor taxa média de desocupação.
+
+De modo geral, os resultados evidenciam que os municípios nordestinos apresentam uma realidade bastante heterogênea, com diferentes combinações de características educacionais e socioeconômicas. A utilização conjunta da ACP e da Análise de Cluster mostrou-se, portanto, uma ferramenta útil para resumir as informações e identificar padrões entre os municípios, contribuindo para uma melhor compreensão das desigualdades existentes na região.
+
+Como possibilidade de aprimoramento, análises futuras poderiam considerar outros indicadores, diferentes períodos de tempo ou até mesmo comparar diferentes métodos de agrupamento, permitindo verificar se os perfis identificados permanecem estáveis e ampliar a compreensão das diferenças existentes entre os municípios. Ainda assim, os resultados obtidos neste trabalho foram suficientes para evidenciar a diversidade dos perfis municipais e demonstrar a utilidade das técnicas multivariadas na análise de características socioeconômicas e educacionais.
+
+# Referências
+
+::: {.hidden}
+[@bd_atlas; @bd_ideb; @artes2023metodos]
+:::
+
+<div id="refs"></div>
+
+
+<div class="footer">
+Campina Grande - PB<br>
+2026
+</div>
